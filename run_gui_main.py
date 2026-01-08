@@ -3,11 +3,17 @@ import tkinter as tk
 from bots.example_bots import RandomBot, GreedyBot, MinimaxBot
 from gui import IsolationGUI
 
+# # To play with two humans:
 # playerWhite = None
-# playerBlack = MinimaxBot(depth=1)
+# playerBlack = None
 
-playerWhite = MinimaxBot(depth=1, seed=42)
-playerBlack = MinimaxBot(depth=4, seed=42)
+# To play against a bot:
+playerWhite = None
+playerBlack = MinimaxBot(depth=4)
+
+# # To watch two bots play:
+# playerWhite = RandomBot()
+# playerBlack = RandomBot()
 
 if __name__ == "__main__":
     root = tk.Tk()

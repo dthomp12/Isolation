@@ -3,8 +3,6 @@ import time
 from tournament_helpers import run_tournament
 from bots.example_bots import RandomBot, GreedyBot, MinimaxBot
 
-import time
-
 if __name__ == "__main__":
     # Create your bots here (may need to import new ones)
     bot_a = MinimaxBot(depth=2)
