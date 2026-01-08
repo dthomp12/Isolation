@@ -11,7 +11,8 @@ Welcome to the **Isolation Game AI** repository! This project lets you play and 
 4. [How to Play](#how-to-play)  
 5. [Creating Your Own Bot](#creating-your-own-bot)  
 6. [Running Simulations](#running-simulations)  
-7. [Tips and Tricks](#tips-and-tricks)  
+7. [Tips and Tricks](#tips-and-tricks)
+8. [Submitting your Bot](#submitting-your-bot)
 
 ---
 
@@ -24,7 +25,7 @@ Welcome to the **Isolation Game AI** repository! This project lets you play and 
 - On your turn, move your piece like a queen in chess (any number of squares in any direction).  
 - After moving, the square you left becomes **blocked**.  
 - Goal: trap your opponent so they cannot move.  
-- Game ends when a player has no legal moves. Rules may allow for draws if both are trapped.
+- Game ends when a player has no legal moves at the start of their turn. If both players are trapped, it is a draw.
 
 ---
 
@@ -50,13 +51,12 @@ tournament_helpers.py # Functions for running tournaments
 ### Requirements
 - Python 3.8 or higher
 - Tkinter (for GUI)
-- Optional: `numpy` for more advanced bots
 
 ### Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/isolation-ai.git
-cd isolation-ai
+git clone https://github.com/dthomp12/Isolation.git
+cd Isolation
 ````
 
 2. Run the GUI to play manually or watch bots:
@@ -157,3 +157,34 @@ run_tournament(bot_a, bot_b, n_games=200)
 * **Reproducibility:** Use the `seed` parameter for deterministic behavior.
 
 ---
+
+## Submitting Your Bot
+
+To send me your bot, please follow these instructions:
+
+1. **Create your bot class**  
+   - Your bot should be a Python class that **inherits from `Bot_Base_Class`** (found in `bots/bot_base.py`).  
+   - It must implement the method:
+     ```python
+     def choose_move(self, state: IsolationState):
+         """
+         Given the current IsolationState, return a legal move (row, column).
+         """
+         pass
+     ```
+   - You can use `state.legal_moves()` to get the list of valid moves.  
+   - You can optionally use a constructor (`__init__`) to accept parameters like a random seed or other settings.
+
+2. **Provide instantiation instructions**  
+   - When you submit your bot, tell me **exactly how to create an instance of your class**.  
+   - Example:
+     ```python
+     from bots.drews_bot import DrewsBot
+
+     # Create a DrewsBot with the parameters it needs
+     drew_bot = DrewsBot(mode="sicko", you_just_got_shrekked=True)
+     ```
+
+3. **Send only the class and instantiation instructions**  
+   - I do **not** need your entire project folder — just the Python class file(s) containing your bot, and a short note on how to instantiate it.  
+   - This allows me to import your bot into our tournament scripts easily.
