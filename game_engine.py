@@ -16,30 +16,54 @@ PLAYER_BLACK = 2  # second player
 BOARD_SIZE = 7
 NUM_SQUARES = BOARD_SIZE * BOARD_SIZE
 
-FULL_BOARD_MASK = (1 << NUM_SQUARES) - 1
-
 DIRECTIONS = (
     (-1,  0), (1,  0), (0, -1), (0,  1),
     (-1, -1), (-1, 1), (1, -1), (1, 1)
 )
 
 # Precompute rays as bitmasks for each square & direction
-def precompute_rays_bitmask(size=BOARD_SIZE):
-    rays = [[0]*8 for _ in range(NUM_SQUARES)]
-    for r in range(size):
-        for c in range(size):
-            sq = r*size + c
-            for d, (dr, dc) in enumerate(DIRECTIONS):
+def generate_rays_indices():
+    """Generate rays for each square as lists of square indices, ordered from the piece outward."""
+    RAYS_BITS = [[] for _ in range(BOARD_SIZE * BOARD_SIZE)]
+
+    directions = [
+        (-1, 0), (1, 0),   # vertical
+        (0, -1), (0, 1),   # horizontal
+        (-1, -1), (-1, 1), (1, -1), (1, 1)  # diagonals
+    ]
+
+    for r in range(BOARD_SIZE):
+        for c in range(BOARD_SIZE):
+            sq_index = r * BOARD_SIZE + c
+            for dr, dc in directions:
+                ray = []
                 nr, nc = r + dr, c + dc
-                mask = 0
-                while 0 <= nr < size and 0 <= nc < size:
-                    mask |= 1 << (nr*size + nc)
+                while 0 <= nr < BOARD_SIZE and 0 <= nc < BOARD_SIZE:
+                    ray.append(nr * BOARD_SIZE + nc)
                     nr += dr
                     nc += dc
-                rays[sq][d] = mask
-    return rays
+                RAYS_BITS[sq_index].append(ray)
 
-RAYS_BITS = precompute_rays_bitmask()
+    return RAYS_BITS
+
+def _bits_in_bitboard(bitboard):
+    index = 0
+    while bitboard != 0:
+        if bitboard & 1:
+            yield index
+        bitboard >>= 1
+        index += 1
+
+def _bits_in_ray(ray):
+    """Yield square indices in a ray, in LSB → MSB order."""
+    index = 0
+    while ray != 0:
+        if ray & 1:
+            yield index
+        ray >>= 1
+        index += 1
+
+RAYS_BITS = generate_rays_indices()
 
 class IsolationState:
     __slots__ = ["white_bb", "black_bb", "blocked_bb", "white_sq", "black_sq", "current_player", "turn"]
@@ -87,27 +111,26 @@ class IsolationState:
         player_sq = self.white_sq if player == PLAYER_WHITE else self.black_sq
         opp_sq = self.black_sq if player == PLAYER_WHITE else self.white_sq
 
-        occupied = self._all_occupied()
+        occupied = self._all_occupied() | (1 << player_sq)
 
         # Precompute opponent attack mask
         opp_attack_mask = 0
         for ray in RAYS_BITS[opp_sq]:
-            opp_attack_mask |= ray
+            for sq in ray:
+                opp_attack_mask |= 1 << sq
+                if (occupied >> sq) & 1:  # stop at blockers
+                    break
 
-        # Iterate over rays from player position
+        # Generate legal moves for player
         for ray in RAYS_BITS[player_sq]:
-            # Mask ray with empty squares
-            ray_moves = ray & ~occupied
-            # Remove unsafe squares
-            ray_moves &= ~opp_attack_mask
-
-            # Extract bits efficiently
-            while ray_moves:
-                lsb = ray_moves & -ray_moves
-                sq = (lsb).bit_length() - 1
-                r, c = divmod(sq, BOARD_SIZE)
-                moves.append((r, c))
-                ray_moves ^= lsb  # remove lowest bit
+            for sq in ray:
+                # if sq == player_sq:
+                #     continue 
+                if (occupied >> sq) & 1:
+                    break  # stop ray at blocker
+                if not ((opp_attack_mask >> sq) & 1):  # avoid squares attacked by opponent
+                    r, c = divmod(sq, BOARD_SIZE)
+                    moves.append((r, c))
 
         return moves
 
@@ -200,6 +223,9 @@ if __name__ == "__main__":
     #
     # Converting board to 1D
     # 0.085 seconds
+    #
+    # Converting to bitboards
+    # 0.058 seconds
 
     state = IsolationState.initial_state()
 
