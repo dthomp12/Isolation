@@ -8,15 +8,15 @@ from gui import IsolationGUI
 # playerBlack = None
 
 # To play against a bot:
-playerWhite = None
-playerBlack = MinimaxBot(depth=4)
+# playerWhite = None
+# playerBlack = None
 
 # # To watch two bots play:
-# playerWhite = RandomBot()
-# playerBlack = RandomBot()
+playerWhite = RandomBot()
+playerBlack = RandomBot()
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Isolation+")
-    IsolationGUI(root, playerWhite, playerBlack, move_delay_ms=200)
+    IsolationGUI(root, playerWhite, playerBlack, move_delay_ms=50)
     root.mainloop()
