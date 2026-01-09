@@ -61,7 +61,7 @@ class IsolationGUI:
                 x1 = x0 + CELL_SIZE
                 y1 = y0 + CELL_SIZE
 
-                cell = self.state.board[r][c]
+                cell = self.state.get_square(r, c)
 
                 # Determine cell color
                 if cell == EMPTY:
@@ -119,7 +119,7 @@ class IsolationGUI:
         y = r * CELL_SIZE + CELL_SIZE // 2
         radius = CELL_SIZE // 2 - 8  # padding from edges
 
-        cell = self.state.board[r][c]
+        cell = self.state.get_square(r,c)
         color = PLAYER_COLORS[cell]
 
         # Draw circle with border
