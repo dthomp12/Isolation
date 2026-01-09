@@ -5,7 +5,7 @@ __all__ = [
     "IsolationState",
     "EMPTY", "BLOCKED",
     "PLAYER_WHITE", "PLAYER_BLACK",
-    "BOARD_SIZE"
+    "BOARD_SIZE", "RAYS"
 ]
 
 # Board pieces
@@ -21,6 +21,27 @@ DIRECTIONS = (
     (-1, -1), (-1, 1), (1, -1), (1, 1)
 )
 
+def precompute_rays(size):
+    rays = [[None] * len(DIRECTIONS) for _ in range(size * size)]
+
+    for r in range(size):
+        for c in range(size):
+            sq = r * size + c
+            for d, (dr, dc) in enumerate(DIRECTIONS):
+                ray = []
+                nr, nc = r + dr, c + dc
+                while 0 <= nr < size and 0 <= nc < size:
+                    ray.append((nr, nc))
+                    nr += dr
+                    nc += dc
+                rays[sq][d] = ray
+
+    return rays
+
+RAYS = precompute_rays(BOARD_SIZE)
+
+# print(RAYS)
+
 class IsolationState:
     __slots__ = ["board", "white_pos", "black_pos", "current_player", "turn"]
 
@@ -34,17 +55,12 @@ class IsolationState:
     @staticmethod
     def initial_state(size=BOARD_SIZE):
         """Return initial board state with white moving first."""
-        board = np.zeros((size, size), dtype=np.int8)
-        # positions = np.zeros((3, 2), dtype=np.int8)
+        board = [[EMPTY for _ in range(size)] for _ in range(size)]
 
-        # positions[PLAYER_WHITE] = (size // 2 - 1, size // 2 - 1)
-        # positions[PLAYER_BLACK] = (size // 2 + 1, size // 2 + 1)
-        # board[tuple(positions[PLAYER_WHITE])] = PLAYER_WHITE
-        # board[tuple(positions[PLAYER_BLACK])] = PLAYER_BLACK
         white_pos = (size // 2 - 1, size // 2 - 1)
         black_pos = (size // 2 + 1, size // 2 + 1)
-        board[white_pos] = PLAYER_WHITE
-        board[black_pos] = PLAYER_BLACK
+        board[white_pos[0]][white_pos[1]] = PLAYER_WHITE
+        board[black_pos[0]][black_pos[1]] = PLAYER_BLACK
         return IsolationState(board, white_pos, black_pos, PLAYER_WHITE)
 
     # def clone(self):
@@ -55,13 +71,17 @@ class IsolationState:
     #     return IsolationState(new_board, white_pos, black_pos, self.current_player, self.turn)
 
     def clone(self):
-        return IsolationState(
-            self.board.copy(),
-            self.white_pos,
-            self.black_pos,
-            self.current_player,
-            self.turn
-        )
+        # return IsolationState(
+        #     self.board.copy(),
+        #     self.white_pos,
+        #     self.black_pos,
+        #     self.current_player,
+        #     self.turn
+        # )
+        new_board = [row[:] for row in self.board]
+        white_pos = tuple(self.white_pos)
+        black_pos = tuple(self.black_pos)
+        return IsolationState(new_board, white_pos, black_pos, self.current_player, self.turn)
 
     def in_bounds(self, r, c):
         return 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE
@@ -75,71 +95,44 @@ class IsolationState:
             return PLAYER_WHITE
         else:
             raise ValueError(f"Invalid player: {player}")
-        
-    def attacked_squares(self, player):
-        """Return all squares that `player` could move to."""
-        r, c = self.white_pos if player == PLAYER_WHITE else self.black_pos
-        attacked = set()
-
-        for dr, dc in DIRECTIONS:
-            nr, nc = r + dr, c + dc
-            while self.in_bounds(nr, nc):
-                attacked.add((nr, nc))
-                if self.board[nr][nc] != EMPTY:
-                    break
-                nr += dr
-                nc += dc
-        
-        return attacked
-    
-    def is_safe_move(self, move, player=None):
-        if player is None:
-            player = self.current_player
-
-        next_state = self.apply_move(move)
-        opponent = self.opponent(player)
-
-        player_pos = (
-            next_state.white_pos
-            if player == PLAYER_WHITE
-            else next_state.black_pos
-        )
-
-        return player_pos not in next_state.attacked_squares(opponent)
 
     def legal_moves(self, player=None):
         if player is None:
             player = self.current_player
 
+        # Player and opponent positions
         r, c = self.white_pos if player == PLAYER_WHITE else self.black_pos
-        
+        ro, co = self.black_pos if player == PLAYER_WHITE else self.white_pos
+
+        sq = r * BOARD_SIZE + c
+        opp_sq = ro * BOARD_SIZE + co
+
         moves = []
 
-        for dr, dc in DIRECTIONS:
-            nr, nc = r + dr, c + dc
-            while self.in_bounds(nr, nc) and self.board[nr][nc] == EMPTY:
-                move = (nr, nc)
-                
-                if self.is_safe_move(move, player):
-                    moves.append(move)
+        # Generate moves from player rays
+        for ray in RAYS[sq]:
+            for nr, nc in ray:
+                if self.board[nr][nc] != EMPTY:
+                    break
 
-                nr += dr
-                nc += dc
+                # ---- safety check via opponent rays ----
+                safe = True
+                for opp_ray in RAYS[opp_sq]:
+                    for tr, tc in opp_ray:
+                        if self.board[tr][tc] == BLOCKED:
+                            break
+                        if (tr, tc) == (nr, nc):
+                            safe = False
+                            break
+                        if self.board[tr][tc] != EMPTY:
+                            break
+                    if not safe:
+                        break
+
+                if safe:
+                    moves.append((nr, nc))
 
         return moves
-    
-    # def legal_moves(self, player=None):
-    #     if player is None:
-    #         player = self.current_player
-    #     r, c = self.positions[player]
-    #     moves = []
-    #     for dr, dc in DIRECTIONS:
-    #         nr, nc = r + dr, c + dc
-    #         while self.in_bounds(nr, nc) and self.board[nr][nc] == EMPTY:
-    #             moves.append((nr, nc))
-    #             nr += dr
-    #             nc += dc
-    #     return moves
 
     def is_terminal(self):
         return not self.legal_moves(self.current_player)
@@ -186,25 +179,38 @@ if __name__ == "__main__":
     # Base time for 10,000 calls to legal_moves in starting position
     # 1.19 s
     #
-    # Just by making the board a numpy arrays, and positions + direction tuples: 
-    # 1.88 seconds
+    # Just by making positions + direction tuples: 
+    # 1.16 seconds
     #
+    # Now, removing apply_move from is_safe_move (no copying whole board)
+    # 0.89 seconds
     #
-    #
-    #
-    #
+    # Precomputed movement rays from each position
+    # 0.42 seconds
     #
 
     state = IsolationState.initial_state()
 
     N = 10_000
-    # N = 25
+    # N = 1
+
+    total_legal = 0.0
+    total_apply = 0.0
 
     start = time.perf_counter()
     for _ in range(N):
+        t0 = time.perf_counter()
         moves = state.legal_moves()
+        t1 = time.perf_counter()
+        total_legal += t1 - t0
+
         if moves:
-            state.apply_move(moves[0])
+            t0 = time.perf_counter()
+            state.apply_move(moves[0])  # must assign new state
+            t1 = time.perf_counter()
+            total_apply += t1 - t0
     end = time.perf_counter()
 
-    print(f"Current time to get legal_moves 10,000 times : {end - start:.4f} seconds")
+    print(f"Total time: {end - start:.4f} seconds")
+    print(f"Time spent in legal_moves: {total_legal:.4f} seconds")
+    print(f"Time spent in apply_move: {total_apply:.4f} seconds")
