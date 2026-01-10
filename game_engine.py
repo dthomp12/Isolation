@@ -163,6 +163,9 @@ class IsolationState:
 
     def is_terminal(self):
         return len(self.legal_moves()) == 0
+    
+    def is_initial(self):
+        return self.blocked_bb == 0
 
     def winner(self):
         if not self.is_terminal():

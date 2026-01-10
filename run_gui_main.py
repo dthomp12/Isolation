@@ -4,16 +4,16 @@ from bots.example_bots import RandomBot, GreedyBot, MinimaxBot
 from gui import IsolationGUI
 
 # # To play with two humans:
-playerWhite = None
-playerBlack = None
+# playerWhite = None
+# playerBlack = None
 
 # To play against a bot:
-# playerWhite = None
-# playerBlack = GreedyBot()
+playerWhite = None
+playerBlack = GreedyBot()
 
 # # To watch two bots play:
-# playerWhite = MinimaxBot(depth=3)
-# playerBlack = RandomBot()
+# playerWhite = MinimaxBot(depth=6)
+# playerBlack = MinimaxBot(depth=1)
 
 if __name__ == "__main__":
     root = tk.Tk()

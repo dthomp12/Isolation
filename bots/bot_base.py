@@ -9,11 +9,11 @@ class Bot_Base_Class:
         self.seed = seed
         self.reset_rng()
 
-    def reset_rng(self):
+    def reset_rng(self, seed=None):
         """
         Reset the internal RNG for deterministic behavior.
         """
-        self.rng = random.Random(self.seed) if self.seed is not None else random
+        self.rng = random.Random(seed) if self.seed is not None else random.Random()
 
     def choose_move(self, state):
         """

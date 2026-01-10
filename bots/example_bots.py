@@ -18,7 +18,7 @@ class GreedyBot(Bot_Base_Class):
         for move in state.legal_moves():
             next_state = state.apply_move(move)
             my_moves = len(next_state.legal_moves(player))
-            opp_moves = len(next_state.legal_moves(IsolationState.opponent(player)))
+            opp_moves = len(next_state.legal_moves(state.opponent(player)))
             score = my_moves - opp_moves
 
             if score > best_score:
@@ -36,7 +36,13 @@ def evaluate_greedy(state, player):
     """
     Heuristic: difference in legal moves
     """
-    opp = PLAYER_BLACK if player == PLAYER_WHITE else PLAYER_WHITE
+    # If game is over and we won, give massive weight
+    if state.is_terminal():
+        if state.winner() == player:
+            return math.inf
+        else:
+            return -math.inf
+    opp = state.opponent(player)
     return len(state.legal_moves(player)) - len(state.legal_moves(opp))
 
 class MinimaxBot(Bot_Base_Class):
@@ -53,6 +59,7 @@ class MinimaxBot(Bot_Base_Class):
                 return self.eval_func(state, self.player), None
 
             moves = state.legal_moves(state.current_player)
+            self.rng.shuffle(moves)
             if not moves:
                 return self.eval_func(state, self.player), None
 
