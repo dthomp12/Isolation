@@ -3,6 +3,11 @@ import math
 from game_engine import IsolationState, PLAYER_WHITE, PLAYER_BLACK
 from bots.bot_base import Bot_Base_Class
 
+# -DiagonalBot, CornerBot, and EdgeBot all target specific portions of the board and lose frequently
+# -BlindGreedy maximizes the number of moves available to itself only, ignoring the opponent
+# -AgroGreedy tries to minimize the opponent's number of moves, without caring for itself
+# -WeightedMM is an optimized version of Minimax which has improved performance. It additionally
+
 class DiagonalBot(Bot_Base_Class):
     def choose_move(self, state : IsolationState):
         best_score = math.inf
