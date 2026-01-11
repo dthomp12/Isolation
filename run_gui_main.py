@@ -1,6 +1,7 @@
 import tkinter as tk
 
 from bots.example_bots import RandomBot, GreedyBot, MinimaxBot
+from bots.Bryant_bots import BlindGreedy, DiagonalBot, CornerBot, EdgeBot, WeightedMM
 from gui import IsolationGUI
 
 # # To play with two humans:
@@ -9,7 +10,7 @@ from gui import IsolationGUI
 
 # To play against a bot:
 playerWhite = None
-playerBlack = GreedyBot()
+playerBlack = WeightedMM()
 
 # # To watch two bots play:
 # playerWhite = MinimaxBot(depth=6)
@@ -18,5 +19,5 @@ playerBlack = GreedyBot()
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Isolation+")
-    IsolationGUI(root, playerWhite, playerBlack, move_delay_ms=500)
+    IsolationGUI(root, playerWhite, playerBlack, move_delay_ms=1000)
     root.mainloop()
